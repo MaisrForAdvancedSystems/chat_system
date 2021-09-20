@@ -1,17 +1,15 @@
 package main
 
 import (
+	"chat_server/chat"
 	"log"
 	"net/http"
-
-	"./chat"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile)
-
 	// websocket server
-	server := chat.NewServer("/entry")
+	server := chat.NewServer("/chat")
 	go server.Listen()
 
 	// static files
