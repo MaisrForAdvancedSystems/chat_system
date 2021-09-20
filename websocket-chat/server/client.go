@@ -15,6 +15,7 @@ var maxId int = 0
 // Chat client.
 type Client struct {
 	id     int
+	name   string
 	ws     *websocket.Conn
 	server *Server
 	ch     chan *Message
@@ -36,7 +37,7 @@ func NewClient(ws *websocket.Conn, server *Server) *Client {
 	ch := make(chan *Message, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{maxId, ws, server, ch, doneCh}
+	return &Client{maxId, "", ws, server, ch, doneCh}
 }
 
 func (c *Client) Conn() *websocket.Conn {
@@ -104,7 +105,12 @@ func (c *Client) listenRead() {
 			} else if err != nil {
 				c.server.Err(err)
 			} else {
-				c.server.SendAll(&msg)
+				if msg.MessageType == INFO {
+					c.name = msg.Content
+					c.server.sendAllConnectedClients()
+				} else {
+					c.server.SendMessage(&msg)
+				}
 			}
 		}
 	}

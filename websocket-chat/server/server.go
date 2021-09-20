@@ -1,8 +1,11 @@
 package chat
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -28,7 +31,6 @@ func NewServer(pattern string) *Server {
 	sendAllCh := make(chan *Message)
 	doneCh := make(chan bool)
 	errCh := make(chan error)
-
 	return &Server{
 		pattern,
 		messages,
@@ -53,6 +55,22 @@ func (s *Server) SendAll(msg *Message) {
 	s.sendAllCh <- msg
 }
 
+func (s *Server) SendMessage(msg *Message) {
+	if msg == nil {
+		return
+	}
+	if msg.To == "" {
+		s.sendAllCh <- msg
+	} else {
+		client, ok := s.clients[int(msg.Id)]
+		if ok {
+			client.Write(msg)
+		} else {
+			s.Err(errors.New(fmt.Sprintf("Client not found %v", msg.Id)))
+		}
+	}
+}
+
 func (s *Server) Done() {
 	s.doneCh <- true
 }
@@ -64,6 +82,27 @@ func (s *Server) Err(err error) {
 func (s *Server) sendPastMessages(c *Client) {
 	for _, msg := range s.messages {
 		c.Write(msg)
+	}
+}
+
+func (s *Server) sendConnectedClients(c *Client) {
+	msg := Message{}
+	msg.Id = time.Now().Unix()
+	msg.MessageType = CONNECTED_CLIENTS
+	connected := make([]*ConntectdClient, 0)
+	for _, cl := range s.clients {
+		connected = append(connected, &ConntectdClient{
+			Id:   cl.id,
+			Name: cl.name,
+		})
+	}
+	msg.Clients = connected
+	c.Write(&msg)
+}
+
+func (s *Server) sendAllConnectedClients() {
+	for _, c := range s.clients {
+		s.sendConnectedClients(c)
 	}
 }
 
@@ -103,6 +142,7 @@ func (s *Server) Listen() {
 			log.Println("Added new client")
 			s.clients[c.id] = c
 			log.Println("Now", len(s.clients), "clients connected.")
+			s.sendAllConnectedClients()
 			s.sendPastMessages(c)
 
 		// del a client

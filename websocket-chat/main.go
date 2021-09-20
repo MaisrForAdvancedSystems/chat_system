@@ -1,7 +1,7 @@
 package main
 
 import (
-	"chat_server/chat"
+	chat "chat_server/server"
 	"log"
 	"net/http"
 )
