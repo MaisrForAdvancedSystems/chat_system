@@ -18,7 +18,7 @@ export const ChatItem = ({ item, onClick }: ChatItemProps) => {
       onClick(item);
     }
   }, [item, onClick]);
-  const {setZoom}=useMap();
+  //const map=useMap();
   return (
     <div>
       <ChatItemElm
@@ -33,7 +33,7 @@ export const ChatItem = ({ item, onClick }: ChatItemProps) => {
       />
       <div>
         <button title="اغلاق مسار تحصيل">
-          <FiActivity onClick={()=>{setZoom(1)}} color="red" />
+          <FiActivity onClick={()=>{}} color="red" />
         </button>
         <button title="اغلاق مسار قراءة">
           <FiActivity color="red" />

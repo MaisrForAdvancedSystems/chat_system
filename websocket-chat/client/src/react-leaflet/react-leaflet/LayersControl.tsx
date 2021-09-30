@@ -72,7 +72,7 @@ export function createControlledLayer(addLayerToControl: AddLayerFunc) {
     const { layersControl, map } = parentContext
     const addLayer = useCallback(
       (layerToAdd: Layer) => {
-        if (layersControl != null) {
+        if (layersControl != null&&map) {
           if (propsRef.current.checked) {
             map.addLayer(layerToAdd)
           }
@@ -95,7 +95,7 @@ export function createControlledLayer(addLayerToControl: AddLayerFunc) {
     )
 
     useEffect(() => {
-      if (layer !== null && propsRef.current !== props) {
+      if (layer !== null && propsRef.current !== props && map) {
         if (
           props.checked === true &&
           (propsRef.current.checked == null ||

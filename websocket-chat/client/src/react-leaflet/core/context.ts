@@ -10,7 +10,7 @@ export interface ControlledLayer {
 
 export interface LeafletContextInterface {
   __version: number
-  //map: Map
+  map: Map|undefined
   layerContainer?: ControlledLayer | LayerGroup
   layersControl?: Control.Layers
   overlayContainer?: Layer

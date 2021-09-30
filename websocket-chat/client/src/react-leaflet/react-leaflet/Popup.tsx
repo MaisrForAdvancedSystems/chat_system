@@ -37,6 +37,9 @@ export const Popup = createOverlayComponent<LeafletPopup, PopupProps>(
 
     useEffect(
       function addPopup() {
+        if(!context.map){
+          return;
+        }
         const { instance } = element
 
         function onPopupOpen(event: PopupEvent) {
@@ -71,6 +74,9 @@ export const Popup = createOverlayComponent<LeafletPopup, PopupProps>(
         }
 
         return function removePopup() {
+          if(!context.map){
+            return;
+          }
           context.map.off({
             popupopen: onPopupOpen,
             popupclose: onPopupClose,

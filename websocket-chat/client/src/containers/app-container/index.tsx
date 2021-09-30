@@ -4,14 +4,12 @@ import { WebsocketsProvider } from "../websocket";
 
 type Props = {};
 
-export const ApplicationProvider: React.FC<Props> = ({ children }) => { 
+export const ApplicationProvider: React.FC<Props> = ({ children }) => {
   return (
     <LeafletContainer>
-    <ChatProvider>
-      <WebsocketsProvider>
-        {children}
-      </WebsocketsProvider>
-    </ChatProvider>
+      <ChatProvider>
+        <WebsocketsProvider>{children}</WebsocketsProvider>
+      </ChatProvider>
     </LeafletContainer>
   );
 };

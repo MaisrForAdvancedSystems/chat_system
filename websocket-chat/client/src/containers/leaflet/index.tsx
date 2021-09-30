@@ -9,7 +9,15 @@ import { Map } from "leaflet";
 export const LeafletContainer: React.FC<any> = ({ children }) => {
   const [map, setMap] = useState<Map>();
   const context = useMemo<LeafletContextInterface | null>(
-    () => (map ? { __version: CONTEXT_VERSION, map, setMap, getMap } : null),
+    () =>
+      map
+        ? {
+            __version: CONTEXT_VERSION,
+            map: map,
+            setMap: setMap,
+            getMap: getMap,
+          }
+        : null,
     [map]
   );
   const getMap = useCallback(() => {

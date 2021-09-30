@@ -40,6 +40,11 @@ function createPane(
   props: PaneProps,
   context: LeafletContextInterface,
 ): HTMLElement {
+  if(!context.map){
+    throw new Error(
+      `map element not defined`,
+    )
+  }
   const name = props.name
 
   if (DEFAULT_PANES.indexOf(name) !== -1) {
@@ -82,6 +87,9 @@ export function Pane(props: PaneProps) {
     setPaneElement(createPane(props, context))
 
     return function removeCreatedPane() {
+      if(!context.map){
+        return;
+      }
       const pane = context.map.getPane(props.name)
       pane?.remove?.()
 
