@@ -1,15 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
 import 'react-chat-elements/dist/main.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { ApplicationProvider } from './AppContainer';
+import { ApplicationProvider } from './containers/app-container';
+import { MapApp } from './map-app';
 
 ReactDOM.render(
   <React.Fragment>
     <ApplicationProvider>
-      <App />
+      <MapApp />
     </ApplicationProvider>
   </React.Fragment>,
   document.getElementById('root')
