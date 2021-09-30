@@ -6,10 +6,17 @@ import reportWebVitals from './reportWebVitals';
 import { ApplicationProvider } from './containers/app-container';
 import { MapApp } from './map-app';
 
+import "leaflet/dist/leaflet.css";
+import "./index.css";
+import "./css/App.css";
+
+
+
+
 ReactDOM.render(
   <React.Fragment>
     <ApplicationProvider>
-      <MapApp />
+      <App />
     </ApplicationProvider>
   </React.Fragment>,
   document.getElementById('root')
@@ -18,4 +25,4 @@ ReactDOM.render(
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+//reportWebVitals();
