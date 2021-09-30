@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/net/websocket"
@@ -14,7 +15,7 @@ import (
 type Server struct {
 	pattern   string
 	messages  []*Message
-	clients   map[int]*Client
+	clients   map[int64]*Client
 	addCh     chan *Client
 	delCh     chan *Client
 	sendAllCh chan *Message
@@ -25,7 +26,7 @@ type Server struct {
 // Create new chat server.
 func NewServer(pattern string) *Server {
 	messages := []*Message{}
-	clients := make(map[int]*Client)
+	clients := make(map[int64]*Client)
 	addCh := make(chan *Client)
 	delCh := make(chan *Client)
 	sendAllCh := make(chan *Message)
@@ -55,16 +56,18 @@ func (s *Server) SendAll(msg *Message) {
 	s.sendAllCh <- msg
 }
 
-func (s *Server) SendMessage(msg *Message) {
+func (s *Server) SendMessage(sender *Client, msg *Message) {
 	if msg == nil {
 		return
 	}
-	if msg.To == "" {
+	if msg.To == 0 {
 		s.sendAllCh <- msg
 	} else {
-		client, ok := s.clients[int(msg.Id)]
+		client, ok := s.clients[msg.To]
 		if ok {
-			client.Write(msg)
+			if client.id != sender.id {
+				client.Write(msg)
+			}
 		} else {
 			s.Err(errors.New(fmt.Sprintf("Client not found %v", msg.Id)))
 		}
@@ -80,8 +83,13 @@ func (s *Server) Err(err error) {
 }
 
 func (s *Server) sendPastMessages(c *Client) {
-	for _, msg := range s.messages {
-		c.Write(msg)
+	cnt := 100
+	for i := 0; i < 5 && i < len(s.messages); i++ {
+		ptr := len(s.messages) - cnt + i
+		if ptr >= 0 && ptr < len(s.messages) {
+			msg := s.messages[ptr]
+			c.Write(msg)
+		}
 	}
 }
 
@@ -91,10 +99,15 @@ func (s *Server) sendConnectedClients(c *Client) {
 	msg.MessageType = CONNECTED_CLIENTS
 	connected := make([]*ConntectdClient, 0)
 	for _, cl := range s.clients {
-		connected = append(connected, &ConntectdClient{
-			Id:   cl.id,
-			Name: cl.name,
-		})
+		con := &ConntectdClient{
+			Id:       cl.id,
+			Name:     cl.name,
+			JoinDate: cl.joinDate,
+		}
+		if cl.id == c.id {
+			con.Iam = true
+		}
+		connected = append(connected, con)
 	}
 	msg.Clients = connected
 	c.Write(&msg)
@@ -108,6 +121,9 @@ func (s *Server) sendAllConnectedClients() {
 
 func (s *Server) sendAll(msg *Message) {
 	for _, c := range s.clients {
+		if c.id == msg.From {
+			continue
+		}
 		c.Write(msg)
 	}
 }
@@ -119,7 +135,7 @@ func (s *Server) Listen() {
 	log.Println("Listening server...")
 
 	// websocket handler
-	onConnected := func(ws *websocket.Conn) {
+	onConnected := func(ws *websocket.Conn, device string) {
 		defer func() {
 			err := ws.Close()
 			if err != nil {
@@ -127,16 +143,23 @@ func (s *Server) Listen() {
 			}
 		}()
 
-		client := NewClient(ws, s)
+		client := NewClient(ws, s, device)
 		s.Add(client)
 		client.Listen()
 	}
-	http.Handle(s.pattern, websocket.Handler(onConnected))
+	http.Handle(s.pattern, http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		device := "desktop"
+		if strings.Contains(strings.ToLower(r.Header.Get("User-Agent")), "mobi") {
+			device = "mobile"
+		}
+		websocket.Handler(func(c *websocket.Conn) {
+			onConnected(c, device)
+		}).ServeHTTP(rw, r)
+	}))
 	log.Println("Created handler")
 
 	for {
 		select {
-
 		// Add new a client
 		case c := <-s.addCh:
 			log.Println("Added new client")
@@ -144,18 +167,25 @@ func (s *Server) Listen() {
 			log.Println("Now", len(s.clients), "clients connected.")
 			s.sendAllConnectedClients()
 			s.sendPastMessages(c)
+			err := saveNewSession(c)
+			if err != nil {
+				s.Err(err)
+			}
 
 		// del a client
 		case c := <-s.delCh:
 			log.Println("Delete client")
 			delete(s.clients, c.id)
-
+			s.sendAllConnectedClients()
+			err := saveSessionLeft(c)
+			if err != nil {
+				s.Err(err)
+			}
 		// broadcast message for all clients
 		case msg := <-s.sendAllCh:
 			log.Println("Send all:", msg)
 			s.messages = append(s.messages, msg)
 			s.sendAll(msg)
-
 		case err := <-s.errCh:
 			log.Println("Error:", err.Error())
 

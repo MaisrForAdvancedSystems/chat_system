@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"golang.org/x/net/websocket"
 )
@@ -14,16 +15,17 @@ var maxId int = 0
 
 // Chat client.
 type Client struct {
-	id     int
-	name   string
-	ws     *websocket.Conn
-	server *Server
-	ch     chan *Message
-	doneCh chan bool
+	id       int64
+	name     string
+	ws       *websocket.Conn
+	server   *Server
+	ch       chan *Message
+	doneCh   chan bool
+	joinDate time.Time
 }
 
 // Create new chat client.
-func NewClient(ws *websocket.Conn, server *Server) *Client {
+func NewClient(ws *websocket.Conn, server *Server, device string) *Client {
 
 	if ws == nil {
 		panic("ws cannot be nil")
@@ -33,11 +35,11 @@ func NewClient(ws *websocket.Conn, server *Server) *Client {
 		panic("server cannot be nil")
 	}
 
-	maxId++
+	id := time.Now().Unix()
 	ch := make(chan *Message, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{maxId, "", ws, server, ch, doneCh}
+	return &Client{id, "", ws, server, ch, doneCh, time.Now()}
 }
 
 func (c *Client) Conn() *websocket.Conn {
@@ -69,12 +71,13 @@ func (c *Client) listenWrite() {
 	log.Println("Listening write to client")
 	for {
 		select {
-
 		// send message to the client
 		case msg := <-c.ch:
-			log.Println("Send:", msg)
-			websocket.JSON.Send(c.ws, msg)
-
+			if msg != nil {
+				m := *msg
+				m.MyId = c.id
+				websocket.JSON.Send(c.ws, &m)
+			}
 		// receive done request
 		case <-c.doneCh:
 			c.server.Del(c)
@@ -108,8 +111,10 @@ func (c *Client) listenRead() {
 				if msg.MessageType == INFO {
 					c.name = msg.Content
 					c.server.sendAllConnectedClients()
+					saveSessionName(c)
 				} else {
-					c.server.SendMessage(&msg)
+					msg.From = c.id
+					c.server.SendMessage(c, &msg)
 				}
 			}
 		}

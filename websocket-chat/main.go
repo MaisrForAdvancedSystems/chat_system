@@ -11,9 +11,9 @@ func main() {
 	// websocket server
 	server := chat.NewServer("/chat")
 	go server.Listen()
-
 	// static files
-	http.Handle("/", http.FileServer(http.Dir("webroot")))
+	http.Handle("/root", http.FileServer(http.Dir("webroot")))
+	// HTTP routing:
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
