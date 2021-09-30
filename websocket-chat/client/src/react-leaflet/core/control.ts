@@ -13,16 +13,22 @@ export function createControlHook<E extends Control, P extends ControlOptions>(
     const { instance } = elementRef.current
     const positionRef = useRef(props.position)
     const { position } = props
+    const map=context.getMap()
 
     useEffect(
       function addControl() {
-        instance.addTo(context.map)
+        if(map){
+          instance.addTo(map)
+
+        }else{
+          console.log("map not defined control canot added")
+        }
 
         return function removeControl() {
           instance.remove()
         }
       },
-      [context.map, instance],
+      [map, instance],
     )
 
     useEffect(

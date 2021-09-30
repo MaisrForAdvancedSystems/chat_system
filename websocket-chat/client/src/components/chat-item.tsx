@@ -4,6 +4,7 @@ import { IChatItem } from "../types";
 import { BiDevices } from "react-icons/all";
 import { useCallback } from "react";
 import { FiActivity } from "react-icons/all";
+import { useMap } from "../react-leaflet";
 
 export interface ChatItemProps {
   item: IChatItem;
@@ -17,6 +18,7 @@ export const ChatItem = ({ item, onClick }: ChatItemProps) => {
       onClick(item);
     }
   }, [item, onClick]);
+  const {setZoom}=useMap();
   return (
     <div>
       <ChatItemElm
@@ -31,7 +33,7 @@ export const ChatItem = ({ item, onClick }: ChatItemProps) => {
       />
       <div>
         <button title="اغلاق مسار تحصيل">
-          <FiActivity color="red" />
+          <FiActivity onClick={()=>{setZoom(1)}} color="red" />
         </button>
         <button title="اغلاق مسار قراءة">
           <FiActivity color="red" />

@@ -18,12 +18,16 @@ export function useLayerLifecycle(
 ) {
   useEffect(
     function addLayer() {
-      const container = context.layerContainer ?? context.map
-      container.addLayer(element.instance)
-
+      const container = context.layerContainer ?? context.getMap()
+      if(container){
+        container.addLayer(element.instance)
+      }
       return function removeLayer() {
-        context.layersControl?.removeLayer(element.instance)
-        context.map.removeLayer(element.instance)
+        context.layersControl?.removeLayer(element.instance);
+        let map=context.getMap();
+        if(map){
+          map.removeLayer(element.instance)
+        }
       }
     },
     [context, element],
@@ -37,7 +41,7 @@ export function createLayerHook<E extends Layer, P extends LayerProps>(
     const context = useLeafletContext()
     const elementRef = useElement(withPane(props, context), context)
 
-    useAttribution(context.map, props.attribution)
+    useAttribution(context.getMap(), props.attribution)
     useEventHandlers(elementRef.current, props.eventHandlers)
     useLayerLifecycle(elementRef.current, context)
 

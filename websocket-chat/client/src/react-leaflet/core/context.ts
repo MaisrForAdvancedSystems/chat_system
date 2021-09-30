@@ -10,11 +10,13 @@ export interface ControlledLayer {
 
 export interface LeafletContextInterface {
   __version: number
-  map: Map
+  //map: Map
   layerContainer?: ControlledLayer | LayerGroup
   layersControl?: Control.Layers
   overlayContainer?: Layer
-  pane?: string
+  pane?: string,
+  setMap:(m:Map|undefined)=>void,
+  getMap:()=>Map|undefined
 }
 
 export const LeafletContext = createContext<LeafletContextInterface | null>(

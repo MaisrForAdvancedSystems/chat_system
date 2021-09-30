@@ -1,4 +1,4 @@
-import { CONTEXT_VERSION, LeafletProvider } from '../core'
+import { CONTEXT_VERSION, LeafletProvider, useLeafletContext } from '../core'
 import {
   FitBoundsOptions,
   LatLngBoundsExpression,
@@ -65,10 +65,12 @@ export function MapContainer<
 }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const map = useMapElement(mapRef, options)
+  const {setMap}=useLeafletContext();
 
   const createdRef = useRef<boolean>(false)
   useEffect(() => {
     if (map != null && createdRef.current === false && whenCreated != null) {
+      setMap(map);
       createdRef.current = true
       whenCreated(map)
     }
@@ -80,14 +82,14 @@ export function MapContainer<
     [map],
   )
 
-  const contents = context ? (
+  /*const contents = context ? (
     <LeafletProvider value={context}>{children}</LeafletProvider>
   ) : (
     placeholder ?? null
-  )
+  )*/
   return (
     <div {...props} ref={mapRef}>
-      {contents}
+      {children}
     </div>
   )
 }

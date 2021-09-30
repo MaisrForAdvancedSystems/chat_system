@@ -72,7 +72,7 @@ export const App = () => {
               style={{ zIndex: 10000, width: "100%", height: "100%" }}
               center={[51.505, -0.09]}
               zoom={13}
-              scrollWheelZoom={false}
+              scrollWheelZoom={false}              
             >
               <TileLayer
                 attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
