@@ -16,7 +16,8 @@ export interface LeafletContextInterface {
   overlayContainer?: Layer
   pane?: string,
   setMap:(m:Map|undefined)=>void,
-  getMap:()=>Map|undefined
+  getMap:()=>Map|undefined,
+  goToMylocation:()=>void
 }
 
 export const LeafletContext = createContext<LeafletContextInterface | null>(

@@ -4,14 +4,10 @@ import 'react-chat-elements/dist/main.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ApplicationProvider } from './containers/app-container';
-import { MapApp } from './map-app';
 
 import "leaflet/dist/leaflet.css";
 import "./index.css";
 import "./css/App.css";
-
-
-
 
 ReactDOM.render(
   <React.Fragment>

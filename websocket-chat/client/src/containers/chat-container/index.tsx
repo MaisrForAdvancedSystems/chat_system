@@ -1,6 +1,7 @@
 import React, { useCallback, useContext, useMemo, useState } from "react";
 import { createContext } from "react";
 import { IChatItem, Message } from "../../types";
+import { useWebsockets } from "../websocket";
 
 type Props = {};
 
@@ -19,6 +20,22 @@ const ChatContext = createContext<ChatContextState>(inital);
 
 export const ChatProvider: React.FC<Props> = ({ children }) => {
   const [state, setstate] = useState<ChatContextState>(inital);
+  const { clients } = useWebsockets();
+  const chatList = useMemo(() => {
+    const lst: Array<IChatItem> = (clients || []).map<IChatItem>((a) => {
+      let now = new Date().getTime();
+      let join = new Date(a.join_date || "").getTime();
+      return {
+        id: a.id,
+        text: a.name,
+        title: a.iam ? "Iam" : a.name || a.id?.toString(),
+        iam: a.iam,
+        titleColor: "red",
+        subTitle: "24234324",
+      };
+    });
+    return lst;
+  }, [clients]);
 
   const updateState = (nwState: Partial<ChatContextState>) => {
     setstate((prevState) => {
@@ -36,8 +53,8 @@ export const ChatProvider: React.FC<Props> = ({ children }) => {
   );
 
   const memo = useMemo(() => {
-    return { ...state, addMessage };
-  }, [state, addMessage]);
+    return { ...state, addMessage,chatList };
+  }, [state, addMessage,chatList]);
   return <ChatContext.Provider value={memo}>{children}</ChatContext.Provider>;
 };
 

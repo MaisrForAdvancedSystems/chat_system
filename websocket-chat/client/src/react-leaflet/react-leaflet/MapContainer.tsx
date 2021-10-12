@@ -69,12 +69,23 @@ export function MapContainer<
 
   const createdRef = useRef<boolean>(false)
   useEffect(() => {
-    if (map != null && createdRef.current === false && whenCreated != null) {
+    console.log(" map useEffect map container")
+    if (map != null && createdRef.current === false ) {
+      console.log(" useEffect setting map")
       setMap(map);
       createdRef.current = true
-      whenCreated(map)
+      if(whenCreated){
+        whenCreated(map)
+      }
+    }else{
+      console.dir({map,current:createdRef.current,whenCreated})
     }
   }, [map, whenCreated])
+  useEffect(()=>{
+    return ()=>{
+      setMap(undefined);
+    }
+  },[setMap])
 
   const [props] = useState({ className, id, style })
   const context = useMemo(

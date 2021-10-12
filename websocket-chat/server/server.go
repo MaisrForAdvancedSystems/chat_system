@@ -165,8 +165,8 @@ func (s *Server) Listen() {
 			log.Println("Added new client")
 			s.clients[c.id] = c
 			log.Println("Now", len(s.clients), "clients connected.")
-			s.sendAllConnectedClients()
-			s.sendPastMessages(c)
+			//s.sendAllConnectedClients()
+			//s.sendPastMessages(c)
 			err := saveNewSession(c)
 			if err != nil {
 				s.Err(err)

@@ -22,6 +22,12 @@ type Client struct {
 	ch       chan *Message
 	doneCh   chan bool
 	joinDate time.Time
+	isLoged  bool
+	token    *string
+}
+
+func (c *Client) IsLoged() bool {
+	return c.isLoged
 }
 
 // Create new chat client.
@@ -39,7 +45,7 @@ func NewClient(ws *websocket.Conn, server *Server, device string) *Client {
 	ch := make(chan *Message, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{id, "", ws, server, ch, doneCh, time.Now()}
+	return &Client{id, "", ws, server, ch, doneCh, time.Now(), false, nil}
 }
 
 func (c *Client) Conn() *websocket.Conn {
@@ -108,10 +114,41 @@ func (c *Client) listenRead() {
 			} else if err != nil {
 				c.server.Err(err)
 			} else {
-				if msg.MessageType == INFO {
-					c.name = msg.Content
-					c.server.sendAllConnectedClients()
-					saveSessionName(c)
+				log.Println(msg.MessageType)
+				if msg.MessageType == LOGIN {
+					user, isLogid, err := login(&msg)
+					if err != nil || user == nil {
+						c.Write(&Message{
+							Id:          time.Now().Unix(),
+							MessageType: LOGIN_FAILED,
+							Content:     err.Error(),
+							ContentType: "string",
+						})
+						continue
+					}
+					if isLogid {
+						c.Write(&Message{
+							Id:          time.Now().Unix(),
+							MessageType: LOGIN_SUCCSSED,
+							Content:     "login succssed",
+							ContentType: "string",
+						})
+						c.name = user.Name
+						c.isLoged = isLogid
+						c.token = &user.Token
+						time.Sleep(10 * time.Millisecond)
+						c.server.sendAllConnectedClients()
+						c.server.sendPastMessages(c)
+						saveSessionName(c)
+					} else {
+						c.Write(&Message{
+							Id:          time.Now().Unix(),
+							MessageType: LOGIN_FAILED,
+							Content:     "بيانات الدخول غير صحيحة",
+							ContentType: "string",
+						})
+					}
+
 				} else {
 					msg.From = c.id
 					c.server.SendMessage(c, &msg)

@@ -9,14 +9,15 @@ import { createContext } from "react";
 import { BiErrorCircle } from "react-icons/all";
 import { getWebsocketState } from "./state";
 import {
-  ConnectedClient,
+  CHAT_MESSAGE,
+  CLIENTS_LIST_MESSAGE,
+  INFO_MESSAGE,
   messageFun,
   WebsocketsContextState,
   WsMessage,
-  WsMessageType,
 } from "./types";
 
-const inital: WebsocketsContextState = {clients:[]};
+const inital: WebsocketsContextState = { clients: [] };
 
 const WebsocketsContext = createContext<WebsocketsContextState>(inital);
 
@@ -29,7 +30,7 @@ export const WebsocketsProvider: React.FC<Props> = ({ children }) => {
   const [conn, setConn] = useState<WebSocket>();
   const onMessageReceivedRef = React.useRef<messageFun | null>();
   const onMessageReceived = onMessageReceivedRef.current;
-  const addr = "ws://localhost:8080/chat";
+  const addr = `ws://${window.location.hostname}:8080/chat`;
   const updateState = (nwState: Partial<WebsocketsContextState>) => {
     setstate((prevState) => {
       return { ...prevState, ...nwState };
@@ -48,8 +49,8 @@ export const WebsocketsProvider: React.FC<Props> = ({ children }) => {
     if (conn) {
       conn.onopen = () => {
         let ws: WsMessage = {
-          id: Date.now(),//message id 
-          message_type: WsMessageType.INFO,
+          id: Date.now(), //message id
+          message_type: INFO_MESSAGE,
           content: "hassan",
           content_type: "text",
         };
@@ -79,18 +80,48 @@ export const WebsocketsProvider: React.FC<Props> = ({ children }) => {
       };
     }
   }, [conn]);
-  const sendMessage = (m: WsMessage) => {
-    if (!conn) {
-      return;
-    }
-    if (!m.id) {
-      m.id = Date.now();
-    }
-    conn.send(JSON.stringify(m));
-  };
+  const sendMessage = useCallback(
+    (m: WsMessage) => {
+      if (!conn) {
+        return;
+      }
+      if (!m.id) {
+        m.id = Date.now();
+      }
+      conn.send(JSON.stringify(m));
+    },
+    [conn]
+  );
+
+  const addEventListener = useCallback(
+    (
+      typ: keyof WebSocketEventMap,
+      fun: (ev: CloseEvent | Event | MessageEvent<any>) => void
+    ) => {
+      if (!conn) {
+        return;
+      }
+      conn.addEventListener(typ, fun);
+    },
+    [conn]
+  );
+
+  const removeEventListener = useCallback(
+    (
+      typ: keyof WebSocketEventMap,
+      fun: (ev: CloseEvent | Event | MessageEvent<any>) => void
+    ) => {
+      if (!conn) {
+        return;
+      }
+      conn.removeEventListener(typ, fun);
+    },
+    [conn]
+  );
 
   const registerOnMessageRecived = useCallback(
     (w: messageFun | null) => {
+      console.log("register func");
       onMessageReceivedRef.current = w;
     },
     [onMessageReceivedRef]
@@ -98,12 +129,13 @@ export const WebsocketsProvider: React.FC<Props> = ({ children }) => {
 
   const handleRecivedMessage = useCallback(
     (s: MessageEvent<any>) => {
+      console.dir({s})
       let ws: WsMessage | null = null;
       try {
         ws = JSON.parse(s.data);
         if (ws) {
-          if (ws?.message_type == WsMessageType.CONNECTED_CLIENTS) {
-            updateState({clients:ws.clients||[]})
+          if (ws?.message_type == CLIENTS_LIST_MESSAGE) {
+            updateState({ clients: ws.clients || [] });
           } else {
             if (onMessageReceived) {
               onMessageReceived(ws);
@@ -113,7 +145,7 @@ export const WebsocketsProvider: React.FC<Props> = ({ children }) => {
       } catch (ex) {
         if (onMessageReceived) {
           onMessageReceived({
-            message_type: WsMessageType.CHAT,
+            message_type: CHAT_MESSAGE,
             id: 0,
             content: s.data,
           });
@@ -123,8 +155,22 @@ export const WebsocketsProvider: React.FC<Props> = ({ children }) => {
     [onMessageReceived]
   );
   const memo = useMemo(() => {
-    return { ...state, sendMessage, registerOnMessageRecived };
-  }, [state, conn, sendMessage]);
+    return {
+      ...state,
+      sendMessage,
+      registerOnMessageRecived,
+      addEventListener,
+      removeEventListener,
+    };
+  }, [
+    state,
+    conn,
+    sendMessage,
+    state.clients,
+    registerOnMessageRecived,
+    addEventListener,
+    removeEventListener,
+  ]);
   const stateDescription = getWebsocketState(conn?.readyState);
   return (
     <WebsocketsContext.Provider value={memo}>

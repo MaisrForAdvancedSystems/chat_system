@@ -5,12 +5,20 @@ import (
 	"time"
 )
 
-type MessageType int
+type MessageType string
 
-const CHAT MessageType = 0
-const INFO MessageType = 1
-const CONTROL MessageType = 2
-const CONNECTED_CLIENTS MessageType = 3
+const CHAT MessageType = "chat"
+const INFO MessageType = "info"
+const CONTROL MessageType = "control"
+const CONNECTED_CLIENTS MessageType = "clients_list"
+const LOGIN MessageType = "login"
+const LOGIN_SUCCSSED MessageType = "login_succssed"
+const LOGIN_FAILED MessageType = "login_failed"
+const ERROR MessageType = "error"
+const WARNING MessageType = "warning"
+const SYSTEM_MESSAGE MessageType = "system"
+const GPS_LOCATION MessageType = "gps_location"
+const APPLICATION MessageType = "application"
 
 type Device int64
 

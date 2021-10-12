@@ -2,17 +2,24 @@ import { useState } from "react";
 import { Button } from "react-chat-elements";
 import { useChat } from "../containers/chat-container";
 import { useWebsockets } from "../containers/websocket";
-import { WsMessageType } from "../containers/websocket/types";
-export const ChatInput = () => {
+import { CHAT_MESSAGE, WsMessage, WsMessageType } from "../containers/websocket/types";
+
+export const ChatInput = ({to,all}:{to?:number,all?:boolean}) => {
   const { addMessage } = useChat();
   const { sendMessage } = useWebsockets();
   const [text, setText] = useState<string>();
   const addNewMessage = () => {
-    console.log({ text });
     if (!text) {
       return;
     }
     if (addMessage && sendMessage) {
+      let wsMesage:WsMessage={
+        id: 0,
+        message_type: CHAT_MESSAGE,
+        content: text,
+        content_type: "text",
+        to:all?undefined:to
+      }
       addMessage({
         text,
         data: text,
@@ -22,13 +29,9 @@ export const ChatInput = () => {
         removeButton: true,
         replyButton: true,
         position: "left",
+        wsMessage:wsMesage
       });
-      sendMessage({
-        id: 0,
-        message_type: WsMessageType.CHAT,
-        content: text,
-        content_type: "text",
-      });
+      sendMessage(wsMesage);
     } else {
       console.error("send message error:no method");
     }
@@ -37,7 +40,7 @@ export const ChatInput = () => {
   return (
     <div style={{ display: "flex", padding: 5 }}>
       <input
-        placeholder="اكتب رسالة"
+        placeholder={all?"ارسل رسالة الى الجميع":"ارسل رسالة"}
         value={text || ""}
         onChange={(evt) => {
           setText(evt.target.value);
@@ -55,7 +58,7 @@ export const ChatInput = () => {
           }
         }}
       />
-      <Button text="send" onClick={addNewMessage} />
+      <Button text={all?"رسالة جماعية":"رسالة"} onClick={addNewMessage} />
     </div>
   );
 };
